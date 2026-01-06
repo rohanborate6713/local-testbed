@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  entitlement-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.entitlement
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  operator-adapter:
+    build:
+      context: .
+      dockerfile: Dockerfile.adapter
+    ports:
+      - "8081:8081"
+    environment:
+      - ENTITLEMENT_URL=http://entitlement-server:8080/v1/auth/event
