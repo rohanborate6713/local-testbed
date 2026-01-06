@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 import redis
 import logging
+import os
 from metrics import auth_events_total, entitlement_enabled_total
 from prometheus_flask_exporter import PrometheusMetrics
 
