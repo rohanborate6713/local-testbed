@@ -8,7 +8,7 @@ services:
 
   entitlement-server:
     build:
-      context: ./entitlement-server
+      context: ./entitlement_server
     ports:
       - "8080:8080"
     depends_on:
@@ -19,7 +19,7 @@ services:
 
   operator-adapter:
     build:
-      context: ./operator-adapter
+      context: ./operator_adapter
     ports:
       - "8081:8081"
     environment:

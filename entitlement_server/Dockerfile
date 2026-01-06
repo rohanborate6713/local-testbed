@@ -2,10 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY entitlement_server/requirements.txt .
+COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY entitlement_server/app.py .
-COPY entitlement_server/metrics.py .
+COPY app.py .
+COPY metrics.py .
 
 CMD ["python", "app.py"]
