@@ -3,8 +3,6 @@ name: CI
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   build:
@@ -13,14 +11,33 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+      #build docker images
     - name: Build Docker images
       run: docker compose build
 
-    - name: Start stack
+      #run trivy scans for image
+    - name: Run Trivy vulnerability scanner on entitlement-server
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'local-testbed-entitlement-server'
+        format: 'table'
+        exit-code: '0' 
+        severity: 'CRITICAL,HIGH'
+
+    - name: Run Trivy vulnerability scanner on operator-adapter
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'local-testbed-operator-adapter'
+        format: 'table'
+        exit-code: '0' 
+        severity: 'CRITICAL,HIGH,MEDIUM'
+
+      #start services
+    - name: Start services
       run: docker compose up -d
 
     - name: Run smoke tests
       run: make smoke
 
-    - name: Stop stack
+    - name: Stop services
       run: docker compose down
