@@ -3,6 +3,7 @@ import redis
 import logging
 import os
 from prometheus_flask_exporter import PrometheusMetrics
+from prometheus_client import Counter, Gauge
 
 app = Flask(__name__)
 
@@ -22,13 +23,13 @@ metrics = PrometheusMetrics(
 )
 
 # === Define your custom metrics using the exporter ===
-auth_events_total = metrics.counter(
+auth_events_total = Counter(
     'auth_events_total',
     'Total authentication events processed',
     ['result']
 )
 
-entitlement_enabled_total = metrics.gauge(
+entitlement_enabled_total = Gauge(
     'entitlement_enabled_total',
     'Current number of enabled entitlements (across all IMSIs)'
 )
