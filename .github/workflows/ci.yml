@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Build Docker images
+      run: docker compose build
+
+    - name: Start stack
+      run: docker compose up -d
+
+    - name: Run smoke tests
+      run: make smoke
+
+    - name: Stop stack
+      run: docker compose down
