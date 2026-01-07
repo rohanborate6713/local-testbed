@@ -23,14 +23,14 @@ metrics = PrometheusMetrics(
 
 # === Define your custom metrics using the exporter ===
 auth_events_total = metrics.counter(
-    name='auth_events_total',
-    documentation='Total authentication events processed',
+    'auth_events_total',
+    'Total authentication events processed',
     labels=['result']
 )
 
 entitlement_enabled_total = metrics.gauge(
-    name='entitlement_enabled_total',
-    documentation='Current number of enabled entitlements (across all IMSIs)'
+    'entitlement_enabled_total',
+    'Current number of enabled entitlements (across all IMSIs)'
 )
 
 @app.route('/v1/auth/event', methods=['POST'])
