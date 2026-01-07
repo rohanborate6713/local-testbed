@@ -25,7 +25,7 @@ metrics = PrometheusMetrics(
 auth_events_total = metrics.counter(
     'auth_events_total',
     'Total authentication events processed',
-    labels=['result']
+    ['result']
 )
 
 entitlement_enabled_total = metrics.gauge(
