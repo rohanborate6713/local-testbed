@@ -6,7 +6,6 @@ from metrics import auth_events_total, entitlement_enabled_total, request_latenc
 from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
-metrics = PrometheusMetrics(app, defaults_prefix='flask')
 
 # Redis connection
 redis_host = os.environ.get('REDIS_HOST', 'localhost')
