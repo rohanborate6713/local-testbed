@@ -2,7 +2,6 @@ from flask import Flask, jsonify, request
 import redis
 import logging
 import os
-from metrics import auth_events_total, entitlement_enabled_total, request_latency_seconds
 from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
@@ -15,6 +14,25 @@ r = redis.Redis(host=redis_host, port=redis_port, db=0)
 # logging
 logging.basicConfig(level=logging.INFO)
 
+# === Initialize PrometheusMetrics ONCE with custom latency histogram buckets ===
+metrics = PrometheusMetrics(
+    app,
+    group_by='endpoint',  # Adds useful 'endpoint' label to latency metrics
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 10.0, float("inf"))
+)
+
+# === Define your custom metrics using the exporter ===
+auth_events_total = metrics.counter(
+    name='auth_events_total',
+    documentation='Total authentication events processed',
+    labels=['result']
+)
+
+entitlement_enabled_total = metrics.gauge(
+    name='entitlement_enabled_total',
+    documentation='Current number of enabled entitlements (across all IMSIs)'
+)
+
 @app.route('/v1/auth/event', methods=['POST'])
 def auth_event():
     data = request.json
@@ -24,7 +42,6 @@ def auth_event():
 
     if not imsi or not event or not correlation_id:
         return jsonify({"error": "Missing fields"}), 400
-
 
     if event == 'AUTH_SUCCESS':
         r.set(f"entitlement:{imsi}", "ENABLED")
@@ -46,10 +63,12 @@ def auth_event():
 
     return jsonify({"status": "processed"}), 200
 
+
 @app.route('/v1/entitlement/<imsi>', methods=['GET'])
 def get_entitlement(imsi):
     status = r.get(f"entitlement:{imsi}")
     return jsonify({"entitlement": status.decode('utf-8') if status else "UNKNOWN"}), 200
+
 
 @app.route('/healthz', methods=['GET'])
 def healthz():
@@ -59,26 +78,6 @@ def healthz():
     except:
         return "UNHEALTHY", 503
 
-
-
-# Initialize Prometheus metrics with custom buckets for latency histogram
-metrics = PrometheusMetrics(
-    app,
-    group_by='endpoint',  # Optional: adds endpoint label for better granularity
-    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 10.0, float("inf"))
-)
-
-# Custom metrics (registered via the exporter)
-auth_events_total = metrics.counter(
-    name='auth_events_total',
-    documentation='Total authentication events processed',
-    labels={'result': lambda: request.json.get('event', '').replace('AUTH_', '').lower()}
-)
-
-entitlement_enabled_total = metrics.gauge(
-    name='entitlement_enabled_total',
-    documentation='Current number of enabled entitlements (across all IMSIs)'
-)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
