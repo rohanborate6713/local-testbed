@@ -3,9 +3,14 @@ import redis
 import logging
 import os
 from prometheus_flask_exporter import PrometheusMetrics
-from prometheus_client import Counter, Gauge
+from prometheus_client import Counter, Gauge,  REGISTRY, GC_COLLECTOR, PLATFORM_COLLECTOR, PROCESS_COLLECTOR
 
 app = Flask(__name__)
+
+# Unregister default collectors to reduce unnecessary metrics
+REGISTRY.unregister(GC_COLLECTOR)
+REGISTRY.unregister(PLATFORM_COLLECTOR)
+REGISTRY.unregister(PROCESS_COLLECTOR)
 
 # Redis connection
 redis_host = os.environ.get('REDIS_HOST', 'localhost')
@@ -81,4 +86,4 @@ def healthz():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)

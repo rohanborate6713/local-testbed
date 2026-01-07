@@ -5,7 +5,7 @@ down:
 	docker compose down
 
 smoke:
-	bash smoke_tests/smoke.sh
+	python3 smoke_tests/smoke.py
 
 logs:
 	docker compose logs -f entitlement-server operator-adapter
