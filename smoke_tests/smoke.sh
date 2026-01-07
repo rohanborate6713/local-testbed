@@ -6,11 +6,11 @@ ADAPTER_URL="http://localhost:8081"
 ENTITLEMENT_URL="http://localhost:8080"
 IMSI="001010000000001"
 
-# Wait for stack to be healthy
+# Wait for server to be healthy
 echo "Waiting for entitlement-server to be healthy..."
 for i in {1..30}; do
   if curl -s "$ENTITLEMENT_URL/healthz" | grep -q "OK"; then
-    echo "Stack is healthy."
+    echo "entitlement-server is healthy."
     break
   fi
   sleep 2
@@ -42,7 +42,7 @@ if [ "$ENTITLEMENT" != "DISABLED" ]; then
   exit 1
 fi
 
-# Verify correlation_ids in logs (grep from docker logs)
+# Verify correlation_ids in logs
 echo "Verifying correlation_ids in logs..."
 ADAPTER_LOGS=$(docker logs $(docker ps -q -f name=operator-adapter) 2>&1)
 ENTITLEMENT_LOGS=$(docker logs $(docker ps -q -f name=entitlement-server) 2>&1)
@@ -57,4 +57,4 @@ if ! echo "$ADAPTER_LOGS" | grep -q "$FAIL_CORR_ID" || ! echo "$ENTITLEMENT_LOGS
   exit 1
 fi
 
-echo "All smoke tests passed!"
+echo "All smoke tests are passed..."

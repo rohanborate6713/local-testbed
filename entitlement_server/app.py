@@ -2,18 +2,18 @@ from flask import Flask, jsonify, request
 import redis
 import logging
 import os
-from metrics import auth_events_total, entitlement_enabled_total
+from metrics import auth_events_total, entitlement_enabled_total, request_latency_seconds
 from prometheus_flask_exporter import PrometheusMetrics
 
 app = Flask(__name__)
-metrics = PrometheusMetrics(app)
+metrics = PrometheusMetrics(app, defaults_prefix='flask')
 
-# Setup Redis
+# Redis connection
 redis_host = os.environ.get('REDIS_HOST', 'localhost')
 redis_port = int(os.environ.get('REDIS_PORT', 6379))
 r = redis.Redis(host=redis_host, port=redis_port, db=0)
 
-# Setup logging
+# logging
 logging.basicConfig(level=logging.INFO)
 
 @app.route('/v1/auth/event', methods=['POST'])
@@ -26,7 +26,7 @@ def auth_event():
     if not imsi or not event or not correlation_id:
         return jsonify({"error": "Missing fields"}), 400
 
-    # Update status
+
     if event == 'AUTH_SUCCESS':
         r.set(f"entitlement:{imsi}", "ENABLED")
         auth_events_total.labels(result='success').inc()
@@ -38,7 +38,7 @@ def auth_event():
     else:
         return jsonify({"error": "Invalid event"}), 400
 
-    # Store last 20 events (use list, trim to 20)
+    # Store last 20 events per IMSI
     event_key = f"events:{imsi}"
     r.lpush(event_key, str(data))
     r.ltrim(event_key, 0, 19)
@@ -60,10 +60,26 @@ def healthz():
     except:
         return "UNHEALTHY", 503
 
-@app.route('/metrics', methods=['GET'])
-def metrics_endpoint():
-    from prometheus_client import generate_latest
-    return generate_latest(), 200
+
+
+# Initialize Prometheus metrics with custom buckets for latency histogram
+metrics = PrometheusMetrics(
+    app,
+    group_by='endpoint',  # Optional: adds endpoint label for better granularity
+    buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 10.0, float("inf"))
+)
+
+# Custom metrics (registered via the exporter)
+auth_events_total = metrics.counter(
+    name='auth_events_total',
+    documentation='Total authentication events processed',
+    labels={'result': lambda: request.json.get('event', '').replace('AUTH_', '').lower()}
+)
+
+entitlement_enabled_total = metrics.gauge(
+    name='entitlement_enabled_total',
+    documentation='Current number of enabled entitlements (across all IMSIs)'
+)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
