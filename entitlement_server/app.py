@@ -20,20 +20,21 @@ r = redis.Redis(host=redis_host, port=redis_port, db=0)
 # logging
 logging.basicConfig(level=logging.INFO)
 
-# === Initialize PrometheusMetrics ONCE with custom latency histogram buckets ===
+# Initialize PrometheusMetrics ONCE with custom latency histogram buckets
 metrics = PrometheusMetrics(
     app,
     group_by='endpoint',  # Adds useful 'endpoint' label to latency metrics
     buckets=(0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 10.0, float("inf"))
 )
 
-# === Define your custom metrics using the exporter ===
+# Define your custom metrics using the exporter
 auth_events_total = Counter(
     'auth_events_total',
     'Total authentication events processed',
     ['result']
 )
 
+# Gauge for current number of enabled entitlements
 entitlement_enabled_total = Gauge(
     'entitlement_enabled_total',
     'Current number of enabled entitlements (across all IMSIs)'

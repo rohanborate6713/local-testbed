@@ -24,4 +24,4 @@ Run `make smoke`. It will:
 Run `make debug-bundle`. It creates debug-bundle.zip with the required files.
 
 ## To see Prometheus metrics like auth_events_total and entitlement_enabled_total.
-Curl http://localhost:8080/metrics 
+curl http://localhost:8080/metrics 
