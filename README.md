@@ -33,4 +33,4 @@ curl -X POST http://localhost:8081/simulate/auth-fail
 
 curl http://localhost:8080/v1/entitlement/001010000000001
 
-curl http://localhost:8080/metrics s
+curl http://localhost:8080/metrics
